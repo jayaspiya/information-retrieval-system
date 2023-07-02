@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task 1: Search Engine</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/jayaspiya/jayaspiya/master/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+
+<body>
+    <header class="flex px-24 py-4 justify-between" style="background-color: #247CBF;">
+        <img src="./assets/coventry_logo.png" alt="Coventry">
+        <h1 class="text-white text-3xl flex items-center font-bold ml-6">
+            Task 1: Vertical Search Engine
+        </h1>
+    </header>
+    <div id="app">
+        <div class="flex px-24 py-1 justify-between">
+            <h1 class="font-semibold text-2xl">
+                Centre for Intelligent Healthcare
+            </h1>
+            <form @submit.prevent="searchPapers" class="flex items-center ">
+                <div class="flex items-center w-64 h-10 rounded-lg focus-within:shadow-lg border-solid border-2 overflow-hidden">
+                    <div class="grid place-items-center w-12 text-gray-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input class="peer h-full w-full outline-none text-sm text-gray-700 pr-2" type="text" v-model="searchTerm" placeholder="Search something.." />
+                </div>
+            </form>
+        </div>
+
+        <div class="container mx-auto my-8">
+            <div v-for="paper in papers" :key="paper.id" class="grid grid-cols-8 gap-4 bg-white rounded shadow p-3 my-4 hover:bg-gray-100 cursor-pointer">
+                <div class="col-span-1 flex flex-col items-center justify-center">
+                    <div class="font-bold text-xs text-center">Relevance Score</div>
+                    <div class="text-xl">{{paper.relevance_score}}%</div>
+                </div>
+
+                <div class="col-span-7 flex">
+                    <div class="w-full">
+                        <div class="text-xl font-bold mb-2">{{paper.title}}</div>
+                        <div class="flex my-0.5">
+                            <a v-for="author in paper.authors" :key="author.url" :href="author.url" target="_blank" class="pr-2 author_tag flex items-center">
+                                <img src="./assets/user.png" alt="published" class="max-h-4 pr-2" />
+                                <span>
+                            {{ (author.url.split("/").pop().split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1))).join(' ') }}
+                        </span>
+                            </a>
+                            </span>
+                        </div>
+
+                        <div class="flex items-center my-0.5">
+                            <img src="./assets/calendar.png" alt="published" class="max-h-4 pr-2" /> {{paper.published_date}}
+                        </div>
+
+                        <div class="my-0.5">
+                            <span v-for="category in paper.categories" :key="category" class="inline-block rounded-full px-2 py-1 text-sm font-semibold text-white m-0.5" style="background-color: #247CBF;">{{category}}</span
+                  >
+                </div>
+            </div>
+                <a class="flex items-center" :href="paper.research_link" _target="blank">
+                    <svg class="h-12 w-12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+            </div>
+              </div>
+        </div>
+        <div class="container mx-auto my-8 text-center font-semibold" >
+            {{prompt}}
+          </div>
+        <div class="flex justify-center">
+            <button 
+                v-if="papers.length > 0"
+                class="mb-6 block rounded px-6 pb-2 pt-2.5 uppercase leading-normal text-white"
+                style="background-color: #247CBF;"
+                v-bind:class="{ 'opacity-50': disableShowMoreButton }"
+                @click="showMore"
+                :disabled='disableShowMoreButton'
+                >
+                Show More
+            </button>
+
+        </div>
+      </div>
+     
+    </div>
+    <script src="https://unpkg.com/vue@2"></script>
+
+    <script>
+      new Vue({
+        data: () => ({
+            lastSearchTerm:"",
+            searchTerm: "",
+            papers: [],
+            prompt:"Please Search Something",
+            disableShowMoreButton:false,
+            skip : 0
+        }),
+        methods: {
+          searchPapers() {
+            if (this.searchTerm === "") {
+              return;
+            }
+            this.prompt = "Loading"
+            fetch(`http://localhost:5000/api?query=${this.searchTerm}`)
+              .then((response) => response.json())
+              .then((data) => {
+                this.papers = data
+                this.skip = 0
+                this.lastSearchTerm = this.searchTerm
+                this.searchTerm = ""
+                if(data.length == 0){
+                    this.prompt = "No Result Found"
+                }
+                else{
+                    this.prompt = `Displaying 0-${this.skip+10} results out of the total "${this.lastSearchTerm}" query`
+                    this.disableShowMoreButton = false
+                }
+              });
+          },
+          showMore(){
+            old_skip = this.skip
+            this.skip = old_skip + 10
+            fetch(`http://localhost:5000/api?query=${this.lastSearchTerm}&skip=${this.skip}`)
+              .then((response) => response.json())
+              .then((data) => {
+                this.papers.push(...data);
+                if(data.length == 0){
+                    this.prompt = "No More Result"
+                    this.disableShowMoreButton = true
+                }
+                else{
+                    this.prompt = `Displaying 0-${this.skip+10} results out of the total "${this.lastSearchTerm}" query`
+                }
+              });
+          }
+        }
+      }).$mount("#app");
+    </script>
+  </body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task 2: Subject Classification</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/jayaspiya/jayaspiya/master/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+
+<body>
+    <header class="flex px-24 py-4 justify-between" style="background-color: #247CBF;">
+        <img src="./assets/coventry_logo.png" alt="Coventry">
+        <h1 class="text-white text-3xl flex items-center font-bold ml-6">
+            Task 2: Subject Classification
+        </h1>
+    </header>
+    <div id="app">
+        <form @submit.prevent="classifier" class="mx-24 my-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
+            <h1 class="text-2xl font-semibold p-2">
+                Classification Subject: Health, Business & Sport
+            </h1>
+            <div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
+                <textarea id="comment" rows="4" v-model="inputText" class="w-full h-96 outline-none px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400" placeholder="Insert scientific document" required></textarea>
+            </div>
+            <div class="flex items-center justify-between px-3 py-2 border-t dark:border-gray-600">
+                <button type="submit" class="inline-flex items-center py-2.5 px-4 text-xs font-medium text-center text-white rounded-lg" style="background-color: #247CBF;">
+                    Classify the document
+                </button>
+                <ul class="flex">
+                    <li class="mx-1 font-bold">Text Category: </li>
+                    <li class="mx-1">{{category}}</li>
+                </ul>
+            </div>
+        </form>
+    </div>
+    <footer class="text-center fixed inset-x-0 bottom-0 p-1">
+        <p class="ml-auto text-xs text-gray-500 dark:text-gray-400">Developed by <a href="https://github.com/jayaspiya" class="text-blue-600 dark:text-blue-500 hover:underline">Jayas Piya</a>.</p>
+    </footer>
+    <script src="https://unpkg.com/vue@2"></script>
+    <script>
+        new Vue({
+          data: () => ({
+              inputText:"",
+              category: "None"
+          }),
+          methods: {
+            classifier() {
+              data = {
+                "text": this.inputText
+              }
+              this.category = "Loading"
+              fetch("http://localhost:5000/classifier", {
+                method: 'POST',body: JSON.stringify(data), headers: {'Content-Type': 'application/json'  },
+              })
+                .then((response) => response.json())
+                .then((data) => {
+                  this.category = data['result']
+                });
+            }
+          }
+        }).$mount("#app");
+    </script>
+</body>
+</html>
